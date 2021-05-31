@@ -1,11 +1,10 @@
-import string
+import os
 import time
 import urllib.request
 from datetime import datetime
-from random import choice, randint
+from os import path
 
 import requests
-import pyfiglet
 from threading import Thread
 from PIL import Image
 
@@ -18,62 +17,118 @@ def checkAPI():
         getImage = dataT['imageRating']
         return True
     except Exception as e:
-        print(f"EXCEPTION : {e}")
         return False
+
+def progressBar(iterable, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    total = len(iterable)
+    # Progress Bar Printing Function
+    def printProgressBar (iteration):
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Initial Call
+    printProgressBar(0)
+    # Update Progress Bar
+    for i, item in enumerate(iterable):
+        yield item
+        printProgressBar(i + 1)
+    # Print New Line on Complete
+    print()
+
+def printPun():
+    print(" _____  _    _ _   _               _____ _____ ")
+    print("|  __ \| |  | | \ | |        /\   |  __ \_   _|")
+    print("| |__) | |  | |  \| |______ /  \  | |__) || | ")
+    print("|  ___/| |  | | . ` |______/ /\ \ |  ___/ | | ")
+    print("| |    | |__| | |\  |     / ____ \| |    _| |_ ")
+    print("|_|     \____/|_| \_|    /_/    \_\_|   |_____|\n")
 
 
 def printUI():
-    ascii_banner = pyfiglet.figlet_format("API-SPAM", "big")
-    print("\n\n\n\n\n\n\n\n" + ascii_banner)
+    print("\n\n\n\n\n\n\n\n")
+    printPun()
     print("Made by : KuebV#0111")
-    print(f"[API Online : {checkAPI()}]")
+    if not checkAPI():
+        print("API is currently offline!")
+        exit()
+
+    stats = getStats()
+    print(f"API Response Time : {round(stats[0], 1)} ms")
+    print(f"Amount of Images : {stats[1]}")
     print("#########################################################")
     print("How would you like to enter in the images?")
     print("1. Reddit\n"
           "2. Via Link\n"
           "3. Quick Fill (Uses Multi-Threading\n"
-          "4. Retrieve Image in Range")
+          "4. Retrieve Image in Range\n"
+          "5. Mass Retrieve Image in Range\n"
+          "6. Retrieve Images from Subreddit")
+    return round(stats[0], 1)
 
 
-def getTimeEstimate(amount):
-    return float(amount) / 3.5
+def getTimeEstimate(amount, rate):
+    return (float(amount) / rate) * checkAPIPing()
 
-def postWeekly(threadName, subreddit):
-    r = get_reddit(subreddit, "top", "100", "week")
+
+def massFill(threadName, subreddit, timeperiod):
+    r = get_reddit(subreddit, "top", "100", timeperiod)
     url = get_image_url(r)
     link = "http://api.abadpun.com/imgStore/url"
     print(f"[{threadName}] - Starting Process at {time.ctime(time.time())}")
-    for x in url:
-        obj = {'url': x}
-        req = requests.post(link, data=str(obj))
+    for x in progressBar(url, prefix = 'Progress : ', suffix='Complete : ', length=100):
+        try:
+            obj = {'url': x}
+            req = requests.post(link, data=str(obj))
+            time.sleep(0.1)
+        except:
+            pass
 
     print(f"[{threadName}] - Completed Process")
-
-
-def postMonthly(threadName, subreddit):
-    r = get_reddit(subreddit, "top", "100", "month")
+    
+def massGrab(threadName, subreddit, timeperiod, dir):
+    r = get_reddit(subreddit, "top", "100", timeperiod)
     url = get_image_url(r)
-    link = "http://api.abadpun.com/imgStore/url"
-    print(f"[{threadName}] - Starting Process at {time.ctime(time.time())}")
+    time1 = time.time()
+    print(f"[{threadName}] - Started")
+
+    if not path.exists(f"{dir}/{subreddit}"):
+        p = os.path.join(dir, subreddit)
+        os.mkdir(p)
+
     for x in url:
-        obj = {'url': x}
-        req = requests.post(link, data=str(obj))
+        try:
+            urlSplit = x.split("/")
 
-    print(f"[{threadName}] - Completed Process")
+            if 'gif' in x:
+                if not path.exists(f"{dir}/{subreddit}/{urlSplit[-1]}.gif"):
+                    urllib.request.urlretrieve(str(x), f'{dir}/{subreddit}/{urlSplit[-1]}.gif')
+            else:
+                if not path.exists(f"{dir}/{subreddit}/{urlSplit[-1]}.png"):
+                    urllib.request.urlretrieve(str(x), f'{dir}/{subreddit}/{urlSplit[-1]}.png')
+        except:
+            pass
+
+    time0 = time.time()
+    print(f"[{threadName}] - Completed after {(time0 - time1)} Seconds")
 
 
-def postYearly(threadName, subreddit):
-    r = get_reddit(subreddit, "top", "100", "year")
-    url = get_image_url(r)
-    link = "http://api.abadpun.com/imgStore/url"
-    print(f"[{threadName}] - Starting Process at {time.ctime(time.time())}")
-    for x in url:
-        obj = {'url': x}
-        req = requests.post(link, data=str(obj))
 
-    print(f"[{threadName}] - Completed Process")
 
 def getImage(lowerNum, higherNum, attempts):
+    t1 = time.time()
     for i in range(0, int(attempts)):
         link = (
             f"http://api.abadpun.com/imgStore")
@@ -81,11 +136,13 @@ def getImage(lowerNum, higherNum, attempts):
         data = r.json()
         dataResponse = data['imageUrl']
         amount = data['imageNumber']
+        t0 = time.time()
 
         imageNum = amount.split("/")
+        times = t0 - t1
 
         if int(lowerNum) < int(imageNum[0]) < int(higherNum):
-            return dataResponse
+            return [dataResponse, imageNum[0], times]
 
     return None
 
@@ -97,6 +154,31 @@ def get_reddit(subreddit, listing, entries, timeframe):
     except:
         print('An Error Occured')
     return request.json()
+
+
+def getStats():
+    t1 = time.time()
+    urlTest = "http://api.abadpun.com/imgStore"
+    requestTest = requests.get(urlTest)
+    dataT = requestTest.json()
+    getImage = dataT['imageNumber']
+    imageNum = getImage.split("/")
+
+    t0 = time.time()
+    secs = t0 - t1
+
+    return [secs, imageNum[1]]
+
+
+def checkAPIPing():
+    t1 = time.time()
+    urlTest = "http://api.abadpun.com/imgStore"
+    requestTest = requests.get(urlTest)
+    dataT = requestTest.json()
+    getImage = dataT['imageRating']
+    t0 = time.time()
+    secs = t0 - t1
+    return secs
 
 
 def get_post_titles(r):
@@ -125,7 +207,8 @@ def is_video(r):
 
 fuck = False
 while not fuck:
-    printUI()
+    stats = printUI()
+    respTime = stats
 
     inp = input("Choice (Ex. 1 or 2) : ")
     if '2' in inp:
@@ -165,14 +248,14 @@ while not fuck:
         t0 = time.time()
 
         print("Starting Process...")
-        print(f"Time Estimate : {round(getTimeEstimate(entries), 1)} Seconds")
+        print(f"Time Estimate : {round(getTimeEstimate(entries, 4.5), 1)} Seconds")
 
         for x in url:
             obj = {'url': x}
             req = requests.post(link, data=str(obj))
             timeNow = time.time()
             completed = completed + 1
-            if (timeNow - t0) > round(getTimeEstimate(entries), 1) and prompt != True:
+            if (timeNow - t0) > round(getTimeEstimate(entries, 4.5), 1) and prompt != True:
                 print("Process is taking longer than expected... ")
                 prompt = True
             elif prompt:
@@ -184,29 +267,88 @@ while not fuck:
         print("\n\n\n\n\n\n\n\n\n\n")
         subreddit = input("Subreddit : ")
 
-        # Not going to lie, this probably isn't used properly, although it does make things easier for myself
-        Thread(target=postWeekly("ThreadOne", subreddit)).start()
-        Thread(target=postMonthly("ThreadTwo", subreddit)).start()
-        Thread(target=postMonthly("ThreadThree", subreddit)).start()
-        print("All Threads Done")
+        massFill('Weekly', subreddit, 'week')
+        massFill('Monthly', subreddit, 'month')
+        massFill('Yearly', subreddit, 'year')
+
     if '4' in inp:
         print("\n\n\n\n\n\n\n\n\n\n")
         rangestr = input("Enter your image range : (Ex. 1000 - 2000)")
         attempts = input("Enter how many attempts you're willing to wait for : ")
+        if int(attempts) > 500:
+            print("Estimated Time : <10 Seconds")
+        else:
+            print(f"Estimated Time : {round(getTimeEstimate(attempts, 2.7))} Seconds")
+
         r = rangestr.split("-")
         lowerRange = str(r[0]).strip()
         upperRange = str(r[1]).strip()
 
+        t1 = time.time()
+
         im = getImage(lowerRange, upperRange, attempts)
         if im is None:
             print("Ran out of attempts")
+            t0 = time.time()
+            print("Process took {} Seconds".format((t1 - t0)))
         else:
             # img = Image.open(requests.get(im, stream=True).raw)
-            characters = string.ascii_letters
-            fileName = "".join(choice(characters) for x in range(randint(8, 16)))
-            urllib.request.urlretrieve(im, f'{fileName}.png')
-            img = Image.open(f"{fileName}.png")
-            img.show()
+            imgLink = im[0]
+            imgNum = im[1]
+            if 'gif' in imgLink:
+                if not path.exists(f"Images/IMG-{str(imgNum)}.gif"):
+                    urllib.request.urlretrieve(str(imgLink), f'Images/IMG-{str(imgNum)}.gif')
+                    img = Image.open(f'Images/IMG-{str(imgNum)}.gif')
+                    img.show()
+                else:
+                    print("File Already Exists")
+                    img = Image.open(f'Images/IMG-{str(imgNum)}.gif')
+                    img.show()
+            else:
+                if not path.exists(f"Images/IMG-{str(imgNum)}.png"):
+                    urllib.request.urlretrieve(str(imgLink), f'Images/IMG-{str(imgNum)}.png')
+                    img = Image.open(f'Images/IMG-{str(imgNum)}.png')
+                    img.show()
+                else:
+                    print("File Already Exists")
+                    img = Image.open(f'Images/IMG-{str(imgNum)}.png')
+                    img.show()
+
+    if '5' in inp:
+        print("\n\n\n\n\n\n\n\n\n\n")
+        rangestr = input("Enter your image range : (Ex. 1000 - 2000)")
+        attempts = input("Enter how many images you want : ")
+        if (float(respTime) * float(attempts)) > 300:
+            print(f"Estimated Time : {(float(respTime) * float(attempts)) / 60} Minutes")
+        else:
+            print(f"Estimated Time : {(float(respTime) * float(attempts))}")
+
+        completion = 0
+
+        r = rangestr.split("-")
+        lowerRange = str(r[0]).strip()
+        upperRange = str(r[1]).strip()
+        for i in range(0, int(attempts)):
+            im = getImage(lowerRange, upperRange, 100)
+            if im is not None:
+                imgLink = im[0]
+                imgNum = im[1]
+                findTime = im[2]
+                if 'gif' in imgLink:
+                    if not path.exists(f"Images/IMG-{str(imgNum)}.gif"):
+                        urllib.request.urlretrieve(str(imgLink), f'Images/IMG-{str(imgNum)}.gif')
+
+                else:
+                    if not path.exists(f"Images/IMG-{str(imgNum)}.png"):
+                        urllib.request.urlretrieve(str(imgLink), f'Images/IMG-{str(imgNum)}.png')
+                completion = completion + 1
+                print(f"[{completion}/{attempts}] has been completed in {findTime} seconds")
+    if '6' in inp:
+        subred = input("Subreddit to Grab : ")
+        massGrab("Weekly", subred, "week", "RedditGrab")
+        massGrab("Monthly", subred, "month", "RedditGrab")
+        massGrab("Yearly", subred, "year", "RedditGrab")
+        print("Done")
 
     else:
         print("Unknown Fuckery")
