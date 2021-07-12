@@ -81,6 +81,9 @@ def printUI():
 
 def getTimeEstimate(amount, rate):
     return (float(amount) / rate) * checkAPIPing()
+    
+def fuckyou(amount)
+    print(amount)
 
 
 def massFill(threadName, subreddit, timeperiod):
