@@ -71,7 +71,6 @@ def printUI():
     print("#########################################################")
     print("How would you like to enter in the images?")
     print("1. Reddit\n"
-          "2. Via Link\n"
           "3. Quick Fill (Uses Multi-Threading\n"
           "4. Retrieve Image in Range\n"
           "5. Mass Retrieve Image in Range\n"
