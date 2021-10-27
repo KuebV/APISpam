@@ -1,6 +1,6 @@
-Added Main Menu
-Added Pause Menu
-Revamped Archeology Player Controller Scripts
-Added Debug Menu
-Added this here changelog
-Added really terrible changelog API
+ADD Added Main Menu
+ADD Added Pause Menu
+CHANGE Revamped Archeology Player Controller Scripts
+ADD Added Debug Menu
+ADD Added this here changelog
+ADD Added really terrible changelog API
