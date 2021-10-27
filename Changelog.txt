@@ -1,5 +1,5 @@
-/ Added Main Menu
-/ Added Pause Menu
-\ Revamped Archeology Player Controller Scripts
-\ Added Debug Menu
-+ Added this here changelog
+Added Main Menu \n
+Added Pause Menu endline
+Revamped Archeology Player Controller Scripts -n
+Added Debug Menu
+Added this here changelog
