@@ -1,5 +1,6 @@
-\tAdded Main Menu
-\tAdded Pause Menu
-\tRevamped Archeology Player Controller Scripts
-\tAdded Debug Menu
-\tAdded this here changelog
+Added Main Menu
+Added Pause Menu
+Revamped Archeology Player Controller Scripts
+Added Debug Menu
+Added this here changelog
+Added really terrible changelog API
