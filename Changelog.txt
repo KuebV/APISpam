@@ -1,6 +1,5 @@
 ADD Added Main Menu
+ADD Added Secret Debug UI
 ADD Added Pause Menu
-CHANGE Revamped Archeology Player Controller Scripts
-ADD Added Debug Menu
-ADD Added this here changelog
-ADD Added really terrible changelog API
+ADD Added Terrible Changelog API
+CHANGE Revamped some scripts
